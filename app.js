@@ -4,16 +4,20 @@
 
 const model = (function () {
     const appData = {
-        doctors: [{name: "dummy doctor", specialty: "dummy spec",}, { name: "jon", specialty: "smith"}],
+        doctors: [{ name: "dummy doctor", specialty: "dummy spec", }, { name: "jon", specialty: "smith" }],
         patients: []
     }
 
     function handleAddItem(item) {
-        if(item instanceof Doctor) {
+        if (item instanceof Doctor) {
             appData.doctors.push(item);
-        } else if(item instanceof Patient) {
+        } else if (item instanceof Patient) {
             appData.patients.push(item);
-        } 
+        }
+    }
+
+    function handleChooseDoctor(patientIndex, chosenDoctor) {
+        appData.patients[patientIndex].chosenDoctor = chosenDoctor;
     }
 
     const Person = function (name) {
@@ -36,7 +40,8 @@ const model = (function () {
         Doctor,
         Patient,
         handleAddItem,
-        appData
+        appData,
+        handleChooseDoctor
     }
 
 })();
@@ -71,57 +76,60 @@ const view = (function () {
         doctors.forEach((doctor) => {
             output += `<li><p>${doctor.name}</p><p>${doctor.specialty}</p></li>`
         });
-            document.getElementById("doctorList").innerHTML = output;
+        document.getElementById("doctorList").innerHTML = output;
     }
 
     function handleDisplayPatients(patients, doctors) {
         document.getElementById("patientList").innerHTML = "";
-
-        let patientsContainerDiv = document.createElement("div");
 
         let doctorsListStr = "";
         doctors.forEach((doctor) => {
             doctorsListStr += `<option>${doctor.name}</option>`;
         });
 
-          
         patients.forEach((patient, i) => {
+            const patientsContainerDiv = document.createElement("div");
+            patientsContainerDiv.id = i;
 
-            // create element that holds both patients detail and select element
-            // replace the element oustide foreach doing same thing
-            // give it an id
-
-            // in function that handles adding choosen doctor:
-            // get value from select (doctors name, probably need a func in controller to get it)
-            // form click event get index number of the patient
-            // add chosen doctor name to the patient object coresponding to the clicked patient element 
-
-
-            let patientElement = document.createElement("div");
-            let patientStr = `<p>${patient.name}</p><p>${patient.idNumber}</p><p>${patient.cardNumber}</p>`;
-            patientElement.innerHTML = patientStr;
-
-            let doctorOptions = document.createElement("div");
-            if(patient.chosenDoctor) {
-                doctorOptions.innerHTML = `<p>${patient.chosenDoctor}</p>`;
-            } else {
-                let doctorsElement = document.createElement("select");
-                doctorsElement.innerHTML = doctorsListStr;
-
-                doctorOptions.appendChild(doctorsElement);
-            }
+            const patientElement = document.createElement("div");
+            patientElement.innerHTML = `<p>${patient.name}</p><p>${patient.idNumber}</p><p>${patient.cardNumber}</p>`;
             patientsContainerDiv.appendChild(patientElement);
-            patientsContainerDiv.appendChild(doctorOptions);
+
+            const chosenDoctorElement = document.createElement("p");
+            patientsContainerDiv.appendChild(chosenDoctorElement);
+            
+            if (patient.chosenDoctor) {
+                chosenDoctorElement.innerHTML = `<p>${patient.chosenDoctor}</p>`;
+            } else {
+                chosenDoctorElement.innerHTML = "(nema)";
+                const selectDoctorElement = document.createElement("select");
+                const defaultOption = document.createElement("option");
+                defaultOption.innerHTML = "Izaberite lekara";
+                selectDoctorElement.add(defaultOption);
+                selectDoctorElement.innerHTML += doctorsListStr;
+                patientsContainerDiv.appendChild(selectDoctorElement);
+            }
+
+            document.getElementById("patientList").appendChild(patientsContainerDiv);
         });
-        
-        document.getElementById("patientList").appendChild(patientsContainerDiv);
+
+    }
+
+    function handleChooseDoctor(e) {
+        e.preventDefault();
+        console.log(e.target.parentNode);
+        return {
+            chosenDoctor: e.target.value,
+            patientIndex: e.target.parentNode.id
+        }
     }
 
     return {
         handleTakeDoctorData,
         handleTakePatientData,
         handleDisplayDoctors,
-        handleDisplayPatients
+        handleDisplayPatients,
+        handleChooseDoctor
     }
 
 })();
@@ -132,8 +140,9 @@ const view = (function () {
 
 const controller = (function (model, view) {
 
-    // const doctorForm = document.getElementById("doctorForm");
-    // const patientForm = document.getElementById("patientForm");
+    const doctorForm = document.getElementById("doctorForm");
+    const patientForm = document.getElementById("patientForm");
+    const patientList = document.getElementById("patientList");
 
     function handleAddDoctor(e) {
         const doctorData = view.handleTakeDoctorData(e);
@@ -149,9 +158,19 @@ const controller = (function (model, view) {
         view.handleDisplayPatients(model.appData.patients, model.appData.doctors);
     }
 
+    function handleChooseDoctor(e) {
+        e.preventDefault();
+        const data = view.handleChooseDoctor(e);
+        console.log(data);
+        model.handleChooseDoctor(data.patientIndex, data.chosenDoctor);
+        view.handleDisplayPatients(model.appData.patients, model.appData.doctors)
+    }
+
     doctorForm.addEventListener("submit", handleAddDoctor);
     patientForm.addEventListener("submit", handleAddPatient);
+    patientList.addEventListener("change", handleChooseDoctor);
 
+    // not needed?
     view.handleDisplayDoctors(model.appData.doctors);
 
 })(model, view);
