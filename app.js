@@ -1,10 +1,10 @@
 // ********MODEL********
 // maintains data
-// creates doctor and patient objects and adds them to data storage (addData object)
+// creates doctor and patient objects and adds them to data storage
 
 const model = (function () {
     const appData = {
-        doctors: [{ name: "dummy doctor", specialty: "dummy spec", }, { name: "jon", specialty: "smith" }],
+        doctors: [],
         patients: []
     }
 
@@ -95,29 +95,29 @@ const view = (function () {
             patientElement.innerHTML = `<p>${patient.name}</p><p>${patient.idNumber}</p><p>${patient.cardNumber}</p>`;
             patientsContainerDiv.appendChild(patientElement);
 
+            // create and append an element displaying data on chosen doctor
             const chosenDoctorElement = document.createElement("p");
             patientsContainerDiv.appendChild(chosenDoctorElement);
             
+            // if doctor has been chosen, display the data, else display "no doctor chosen"
+            //  and create and append select element with doctor options
             if (patient.chosenDoctor) {
                 chosenDoctorElement.innerHTML = `<p>${patient.chosenDoctor}</p>`;
             } else {
-                chosenDoctorElement.innerHTML = "(nema)";
+                chosenDoctorElement.innerHTML = "(no doctor chosen)";
                 const selectDoctorElement = document.createElement("select");
                 const defaultOption = document.createElement("option");
-                defaultOption.innerHTML = "Izaberite lekara";
+                defaultOption.innerHTML = "Choose doctor";
                 selectDoctorElement.add(defaultOption);
                 selectDoctorElement.innerHTML += doctorsListStr;
                 patientsContainerDiv.appendChild(selectDoctorElement);
             }
-
             document.getElementById("patientList").appendChild(patientsContainerDiv);
         });
-
     }
 
     function handleChooseDoctor(e) {
         e.preventDefault();
-        console.log(e.target.parentNode);
         return {
             chosenDoctor: e.target.value,
             patientIndex: e.target.parentNode.id
@@ -136,7 +136,6 @@ const view = (function () {
 
 // *****CONTROLLER*****
 // holds event handlers, receives methods from other two modules and runs them
-// "brings the other two modules together"
 
 const controller = (function (model, view) {
 
@@ -161,7 +160,6 @@ const controller = (function (model, view) {
     function handleChooseDoctor(e) {
         e.preventDefault();
         const data = view.handleChooseDoctor(e);
-        console.log(data);
         model.handleChooseDoctor(data.patientIndex, data.chosenDoctor);
         view.handleDisplayPatients(model.appData.patients, model.appData.doctors)
     }
@@ -169,9 +167,6 @@ const controller = (function (model, view) {
     doctorForm.addEventListener("submit", handleAddDoctor);
     patientForm.addEventListener("submit", handleAddPatient);
     patientList.addEventListener("change", handleChooseDoctor);
-
-    // not needed?
-    view.handleDisplayDoctors(model.appData.doctors);
 
 })(model, view);
 
